@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <bitset>
+#include <set>
 #include <vector>
 
 class qm_petrick {
@@ -18,14 +19,21 @@ public:
   qm_petrick& operator=(const qm_petrick &other);
 
   void PrintTable() const;
-  bool GetInput(std::string &input, std::string &&question);
+  inline void PrintMinterms();
+  static bool GetInput(std::string &input, std::string &&question);
+  static bool ValidateInput(std::string &input, int &&min, int&&max);
 
  private:
-  uint8_t var_;                         // amount of variables to use
-
+  uint16_t var_; // amount of variables to use
+  std::set<int> minterms_;
+//  std::vector<std::vector<std::vector<std::pair<std::bitset<10>, std::bitset<10>>>>> implicants_; // vector of the implicant vectors
   std::bitset<10> *table_;  // table to hold all values
 
-  void SetTruthTable();
+  inline void SetTruthTable();
+  inline bool AddMinterm(std::string &minterm);
+  inline std::vector<std::vector<int>> GroupMinterms(std::set<int> &minterms);
+  inline void CombineMinterms(std::vector<std::pair<std::bitset<10>, bool>> &implicants);
+
 };
 
 #endif //UNTITLED_QM_PETRICK_H
