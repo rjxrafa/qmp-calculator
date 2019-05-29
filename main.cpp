@@ -1,11 +1,11 @@
 #include <iostream>
-#include <conio.h>
 #include "qm_petrick.h"
 
 int main() {
 
   qm_petrick a;
 
-  getch();
+
+  getchar();
   return 0;
 }

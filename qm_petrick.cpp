@@ -25,15 +25,7 @@ qm_petrick::qm_petrick(size_t var): var_(var) {
     PrintMinterms();
   }
 
-//  std::vector <std::pair<std::bitset<10>, bool>> temp;
-//  for (auto x : minterms_) {
-//    temp.push_back(make_pair(table_[x], true));
-//  }
-
-
   GroupMinterms(minterms_);
-//  GroupMinterms(implicants_);
-
 
 }
 
@@ -96,7 +88,7 @@ bool qm_petrick::ValidateInput(std::string &input, int &&min, int &&max) {
 void qm_petrick::PrintMinterms() {
 
   printf("Current minterms: ");
-  for (auto x: minterms_) {
+  for (auto &x: minterms_) {
     printf("%d ", x);
   }
   printf("\n");
@@ -109,6 +101,20 @@ std::vector<std::vector<int>> qm_petrick::GroupMinterms(std::set<int> &minterms)
 
   for (auto x: minterms)
     groups[table_[x].count()].push_back(x);
+
+  for (auto it = groups.begin(); it != groups.end(); ) {
+    if (it->empty())
+      groups.erase(it);
+    else
+      ++it;
+  }
+
+  for (auto &x : groups) {
+    printf("Group %d: \n", table_[x.at(0)].count());
+    for (auto &y : x)
+      printf("%d ", y);
+    printf("\n");
+  }
 
   return groups;
 }
@@ -146,7 +152,7 @@ std::vector<std::vector<int>> qm_petrick::GroupMinterms(std::set<int> &minterms)
 
 void qm_petrick::CombineMinterms(std::vector<std::pair<std::bitset<10>, bool>> &implicants) {
 
-  for (const auto x : implicants) {
+  for (const auto &x : implicants) {
     std::cout << x.first.to_string() << " : ";
     std::cout << std::boolalpha << x.second;
     std::cout << "\n";
