@@ -12,6 +12,14 @@
 
 class qm_petrick {
 
+  struct minterm {
+    std::bitset<10> bits_;
+    std::bitset<10> mask_;
+    std::set<int> terms_;
+    bool used_;
+
+  };
+
 public:
   qm_petrick(size_t var = 4);
   ~qm_petrick();
@@ -22,17 +30,17 @@ public:
   inline void PrintMinterms();
   static bool GetInput(std::string &input, std::string &&question);
   static bool ValidateInput(std::string &input, int &&min, int&&max);
+  inline minterm NewMinterm(int &&term);
 
  private:
   uint16_t var_; // amount of variables to use
-  std::set<int> minterms_;
-//  std::vector<std::vector<std::vector<std::pair<std::bitset<10>, std::bitset<10>>>>> implicants_; // vector of the implicant vectors
+  std::set<int>  minterms_;
   std::bitset<10> *table_;  // table to hold all values
 
   inline void SetTruthTable();
   inline bool AddMinterm(std::string &minterm);
   inline std::vector<std::vector<int>> GroupMinterms(std::set<int> &minterms);
-  inline void CombineMinterms(std::vector<std::pair<std::bitset<10>, bool>> &implicants);
+  inline void CombineMinterms(std::vector<std::vector<int>> &minterms);
 
 };
 

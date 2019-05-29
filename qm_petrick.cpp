@@ -85,6 +85,18 @@ bool qm_petrick::ValidateInput(std::string &input, int &&min, int &&max) {
   }
 }
 
+qm_petrick::minterm qm_petrick::NewMinterm(int &&term) {
+
+  minterm temp;
+
+  temp.mask_ = 1023;
+  temp.bits_ = 0;
+  temp.terms_.insert(term);
+  temp.used_ = false;
+
+  return temp;
+}
+
 void qm_petrick::PrintMinterms() {
 
   printf("Current minterms: ");
@@ -119,45 +131,28 @@ std::vector<std::vector<int>> qm_petrick::GroupMinterms(std::set<int> &minterms)
   return groups;
 }
 
-//void qm_petrick::GroupMinterms(std::vector<std::bitset<10>, bool> &implicants) {
+void qm_petrick::CombineMinterms(std::vector<std::vector<int>> &minterms) {
 
-//  int8_t current_size = -1;
-//
-//  std::vector<std::vector<std::pair<std::bitset<10>, bool>>> groups; // represents all the groups
-//  std::vector<std::pair<std::bitset<10>, bool>> group;               // represents one group
-//
-//  for (auto x: implicants) {
-//    if (x.first.count() > current_size) {
-//      group.push_back(x);
-//      groups.push_back(group); // add new group to groups
-//      group.clear();           // start new group
-//
-//      ++current_size;
-//    }
-//    else
-//      group.push_back(x); // add to current group
-//  }
-//
-//
-//  for (const auto x : groups) {
-//    for (const auto y: x) {
-//      std::string temp = y.first.to_string();
-//      printf("%s\n", temp.c_str());
-//    }
-//  }
-//  implicants_.push_back(groups);
+  std::vector<std::vector<minterm>> new_group;
 
+  for (auto group = minterms.begin(); group != minterms.end()-1 ; ++group) { // for every group
+    std::vector<minterm> temp_group; // create a vector to hold potential group
+    for (auto &term1 : *group) { // for every minterm in the group
+      for (auto &term2 : *(group + 1)) {// compare to every minterm in the other group
+        if ((table_[term1] ^ table_[term2]).count()==1) {
+          minterm temp;
+          temp.mask_ = (table_[term1] ^ table_[term2]);
+          temp.terms_.insert(term1);
+          temp.terms_.insert(term2);
+          temp.used_ = false;
+          temp_group.push_back(temp);
+        }
+      }
+    }
+    if (!temp_group.empty())
+      new_group.push_back(temp_group);
 
-//}
-
-void qm_petrick::CombineMinterms(std::vector<std::pair<std::bitset<10>, bool>> &implicants) {
-
-  for (const auto &x : implicants) {
-    std::cout << x.first.to_string() << " : ";
-    std::cout << std::boolalpha << x.second;
-    std::cout << "\n";
   }
-
 
 }
 
