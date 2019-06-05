@@ -5,6 +5,7 @@
 #include <algorithm>
 #include "qm_petrick.h"
 qm_petrick::qm_petrick(size_t var): var_(var) {
+
   std::string input;
 
   while (1) {
@@ -18,14 +19,22 @@ qm_petrick::qm_petrick(size_t var): var_(var) {
 
   SetTruthTable(); // Assign values to all rows in the truth table
 
-  while (GetInput(input, "Enter minterm (Type enter when done): ")) {
+  while (GetInput(input, "\nEnter minterm (Type enter when done): ")) {
     if (ValidateInput(input, 0, (1<<var_)-1))
       AddMinterm(input);
 
-    PrintMinterms();
+    printf("Your minterms: \n");
+    for (auto &x: minterms_)
+      printf("%d ", x);
   }
 
-  GroupMinterms(minterms_);
+  auto minterm_groups = GroupMinterms();
+  while (CombineMinterms(minterm_groups)) {
+    PrintMinterms(minterm_groups);
+  };
+
+  std::cout << "DONEEE\n";
+  PrintMinterms(minterm_groups);
 
 }
 
@@ -85,34 +94,42 @@ bool qm_petrick::ValidateInput(std::string &input, int &&min, int &&max) {
   }
 }
 
-qm_petrick::minterm qm_petrick::NewMinterm(int &&term) {
+qm_petrick::minterm qm_petrick::NewMinterm(int term) {
 
   minterm temp;
 
-  temp.mask_ = 1023;
-  temp.bits_ = 0;
+  temp.bits_ = table_[term].to_string();
   temp.terms_.insert(term);
   temp.used_ = false;
+
 
   return temp;
 }
 
-void qm_petrick::PrintMinterms() {
+void qm_petrick::PrintMinterms(std::vector<std::vector<qm_petrick::minterm>> &v) {
 
-  printf("Current minterms: ");
-  for (auto &x: minterms_) {
-    printf("%d ", x);
+  printf("Current minterms: \n");
+  for (auto &x: v) {
+    printf("Group %d:\n", CountBits(x.at(0).bits_));
+    for (auto &y : x) {
+      for (auto &z : y.terms_) {
+        printf("%d ", z);
+      }
+      printf("\n");
+    }
+    printf("\n");
   }
   printf("\n");
 
 }
 
-std::vector<std::vector<int>> qm_petrick::GroupMinterms(std::set<int> &minterms) {
-  std::vector<std::vector<int>> groups(10);
-  std::set<int> group;
+std::vector<std::vector<qm_petrick::minterm>> qm_petrick::GroupMinterms() {
+  std::vector<std::vector<minterm>> groups(10);
 
-  for (auto x: minterms)
-    groups[table_[x].count()].push_back(x);
+  // This procedure will group the minterms to their respective bit group.
+  for (auto &x: minterms_) {
+    groups[table_[x].count()].push_back(std::move(NewMinterm(x)));
+  }
 
   for (auto it = groups.begin(); it != groups.end(); ) {
     if (it->empty())
@@ -122,37 +139,94 @@ std::vector<std::vector<int>> qm_petrick::GroupMinterms(std::set<int> &minterms)
   }
 
   for (auto &x : groups) {
-    printf("Group %d: \n", table_[x.at(0)].count());
+    printf("Group %d: \n", CountBits(x.at(0).bits_));
     for (auto &y : x)
-      printf("%d ", y);
+      for (auto &z : y.terms_)
+        printf("%d ", z);
     printf("\n");
   }
 
   return groups;
 }
 
-void qm_petrick::CombineMinterms(std::vector<std::vector<int>> &minterms) {
-
+bool qm_petrick::CombineMinterms(std::vector<std::vector<minterm>> &minterms) {
+  // todo : set used to false when going in here
   std::vector<std::vector<minterm>> new_group;
 
-  for (auto group = minterms.begin(); group != minterms.end()-1 ; ++group) { // for every group
+  for (auto group = minterms.begin(); group != minterms.end()-1 ; ++group) { // for every group in terms
     std::vector<minterm> temp_group; // create a vector to hold potential group
     for (auto &term1 : *group) { // for every minterm in the group
       for (auto &term2 : *(group + 1)) {// compare to every minterm in the other group
-        if ((table_[term1] ^ table_[term2]).count()==1) {
+        if (ValidatePair(term1.bits_, term2.bits_)) {
           minterm temp;
-          temp.mask_ = (table_[term1] ^ table_[term2]);
-          temp.terms_.insert(term1);
-          temp.terms_.insert(term2);
-          temp.used_ = false;
-          temp_group.push_back(temp);
+
+          temp.bits_ = CreateMask(term1.bits_, term2.bits_);
+
+          for (auto &x: term1.terms_) {
+            temp.terms_.insert(x);
+          }
+
+          for (auto &x: term2.terms_) {
+            temp.terms_.insert(x);
+          }
+          temp.used_ = true;
+
+          bool dupe = false;
+          for (auto &x: temp_group) {
+            if (x.terms_ == temp.terms_)
+              dupe = true;
+          }
+
+          if (!dupe)
+            temp_group.push_back(std::move(temp));
         }
       }
     }
     if (!temp_group.empty())
-      new_group.push_back(temp_group);
+      new_group.push_back(std::move(temp_group));
+
 
   }
 
+  minterms = new_group;
+
+  if (minterms.size() == 1)
+    return false;
+  else
+    return true;
+
+}
+bool qm_petrick::ValidatePair(std::string &term1, std::string &term2) {
+
+  unsigned int count = 0;
+  for (unsigned int i = 0; i < term1.length(); ++i) {
+    if (term1[i] != term2[i])
+      ++count;
+  }
+
+  return count <= 1;
+}
+
+std::string qm_petrick::CreateMask(std::string &term1, std::string &term2) {
+
+  std::string output;
+  for (unsigned int i = 0; i < term1.length(); ++i) {
+    if (term1[i] == term2[i])
+      output += term1[i];
+    else
+      output += '-';
+  }
+
+  return output;
+}
+
+int qm_petrick::CountBits(std::string &term) {
+
+  int count = 0;
+  for (unsigned int i = 0; i < term.length(); ++i)
+    if (term[i] == '1')
+      ++count;
+
+  return count;
 }
 

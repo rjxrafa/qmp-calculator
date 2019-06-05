@@ -9,15 +9,14 @@
 #include <bitset>
 #include <set>
 #include <vector>
+#include <queue>
 
 class qm_petrick {
 
   struct minterm {
-    std::bitset<10> bits_;
-    std::bitset<10> mask_;
+    std::string bits_;
     std::set<int> terms_;
     bool used_;
-
   };
 
 public:
@@ -27,10 +26,13 @@ public:
   qm_petrick& operator=(const qm_petrick &other);
 
   void PrintTable() const;
-  inline void PrintMinterms();
+  inline void PrintMinterms(std::vector<std::vector<qm_petrick::minterm>> &my_vec);
   static bool GetInput(std::string &input, std::string &&question);
   static bool ValidateInput(std::string &input, int &&min, int&&max);
-  inline minterm NewMinterm(int &&term);
+  static bool ValidatePair(std::string &term1, std::string &term2);
+  static std::string CreateMask(std::string &term1, std::string &term2);
+  int CountBits(std::string &term);
+  minterm NewMinterm(int term);
 
  private:
   uint16_t var_; // amount of variables to use
@@ -39,8 +41,8 @@ public:
 
   inline void SetTruthTable();
   inline bool AddMinterm(std::string &minterm);
-  inline std::vector<std::vector<int>> GroupMinterms(std::set<int> &minterms);
-  inline void CombineMinterms(std::vector<std::vector<int>> &minterms);
+  std::vector<std::vector<qm_petrick::minterm>> GroupMinterms();
+  bool CombineMinterms(std::vector<std::vector<minterm>> &minterms);
 
 };
 

@@ -2,14 +2,14 @@
 #include "qm_petrick.h"
 
 int main() {
+//
+  qm_petrick a;
 
-//  qm_petrick a;
-
-  std::bitset<5> d("00000"); // 00001
-  std::bitset<5> b("00011"); // 00001
-  std::bitset<5> c = 0;
-
-  c = d^b;
+//  std::bitset<5> d("00000"); // 00001
+//  std::bitset<5> b("00011"); // 00001
+//  std::bitset<5> c = 0;
+//
+//  c = d^b;
 
   /**
    * XOR essentially gives us 1 for every bit difference between two bits. So we use this for
@@ -26,7 +26,7 @@ int main() {
    * 5) XOR the two bitsets, then OR
    */
 
-  std::cout << c;
+//  std::cout << c;
 
   getchar();
   return 0;
