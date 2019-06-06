@@ -34,8 +34,17 @@ qm_petrick::qm_petrick(size_t var): var_(var) {
   };
 
   std::cout << "DONEEE\n";
-  PrintMinterms(minterm_groups);
+  if (!prime_implicants_.empty()) {
+    std::cout << "Prime implicants: \n";
+    for (auto &x : prime_implicants_)  {
+      for (auto &y : x.terms_) {
+        printf("%d ", y);
+      }
+      printf("\n");
+    }
+  }
 
+  PrintImplicantChart();
 }
 
 void qm_petrick::PrintTable() const {
@@ -153,6 +162,11 @@ bool qm_petrick::CombineMinterms(std::vector<std::vector<minterm>> &minterms) {
   // todo : set used to false when going in here
   std::vector<std::vector<minterm>> new_group;
 
+  /** Sets all of the used flags to false **/
+  for (auto &group : minterms)
+    for(auto &terms : group)
+      terms.used_ = false;
+
   for (auto group = minterms.begin(); group != minterms.end()-1 ; ++group) { // for every group in terms
     std::vector<minterm> temp_group; // create a vector to hold potential group
     for (auto &term1 : *group) { // for every minterm in the group
@@ -162,36 +176,51 @@ bool qm_petrick::CombineMinterms(std::vector<std::vector<minterm>> &minterms) {
 
           temp.bits_ = CreateMask(term1.bits_, term2.bits_);
 
-          for (auto &x: term1.terms_) {
+          for (auto &x: term1.terms_)
             temp.terms_.insert(x);
-          }
 
-          for (auto &x: term2.terms_) {
+          for (auto &x: term2.terms_)
             temp.terms_.insert(x);
-          }
-          temp.used_ = true;
 
+          term1.used_ = true;
+          term2.used_ = true;
+
+          /** Checking for dupes **/
           bool dupe = false;
-          for (auto &x: temp_group) {
+          for (auto &x: temp_group)
             if (x.terms_ == temp.terms_)
               dupe = true;
-          }
 
           if (!dupe)
             temp_group.push_back(std::move(temp));
         }
       }
     }
+
     if (!temp_group.empty())
       new_group.push_back(std::move(temp_group));
 
+  }
 
+  /** Add prime implicants **/
+  for (auto &x : minterms) {
+    for (auto &y : x) {
+      if (!y.used_)
+        prime_implicants_.push_back(y);
+    }
   }
 
   minterms = new_group;
 
-  if (minterms.size() == 1)
+  if (minterms.size() <= 1) {
+    for (auto &x : minterms) {
+      for (auto &y : x) {
+        if (!y.used_)
+          prime_implicants_.push_back(y);
+      }
+    }
     return false;
+  }
   else
     return true;
 
@@ -228,5 +257,26 @@ int qm_petrick::CountBits(std::string &term) {
       ++count;
 
   return count;
+}
+
+void qm_petrick::PrintImplicantChart() {
+
+//  printf("%11s", "");
+  for (auto &x : minterms_) {
+    printf("%5d", x);
+  }
+  printf("\n");
+  for (auto &x : prime_implicants_) {
+    for (auto &y : minterms_) {
+      printf ("%5s", x.terms_.count(y) > 0 ? "x" : "");
+    }
+
+    printf("   | ");
+    for (auto &z : x.terms_)
+      printf("%d ", z);
+
+    printf(" \n");
+//    printf("| %s\n", x.bits_.c_str());
+  }
 }
 

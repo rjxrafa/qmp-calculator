@@ -37,12 +37,14 @@ public:
  private:
   uint16_t var_; // amount of variables to use
   std::set<int>  minterms_;
+  std::vector<minterm> prime_implicants_;
   std::bitset<10> *table_;  // table to hold all values
 
   inline void SetTruthTable();
   inline bool AddMinterm(std::string &minterm);
   std::vector<std::vector<qm_petrick::minterm>> GroupMinterms();
   bool CombineMinterms(std::vector<std::vector<minterm>> &minterms);
+  void PrintImplicantChart();
 
 };
 
