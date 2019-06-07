@@ -10,6 +10,8 @@
 #include <set>
 #include <vector>
 #include <queue>
+#include <algorithm>
+#include <sstream>
 
 class qm_petrick {
 
@@ -17,6 +19,7 @@ class qm_petrick {
     std::string bits_;
     std::set<int> terms_;
     bool used_;
+    bool essential_;
   };
 
 public:
@@ -45,6 +48,9 @@ public:
   std::vector<std::vector<qm_petrick::minterm>> GroupMinterms();
   bool CombineMinterms(std::vector<std::vector<minterm>> &minterms);
   void PrintImplicantChart();
+  bool CheckEssentials(std::vector<minterm> &implicants);
+  std::string ConvertExpression(std::string &expression);
+
 
 };
 

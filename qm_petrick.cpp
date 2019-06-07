@@ -2,7 +2,7 @@
 // Created by Rafa on 5/26/2019.
 //
 
-#include <algorithm>
+
 #include "qm_petrick.h"
 qm_petrick::qm_petrick(size_t var): var_(var) {
 
@@ -33,17 +33,19 @@ qm_petrick::qm_petrick(size_t var): var_(var) {
     PrintMinterms(minterm_groups);
   };
 
-  std::cout << "DONEEE\n";
   if (!prime_implicants_.empty()) {
     std::cout << "Prime implicants: \n";
     for (auto &x : prime_implicants_)  {
+      bool first = true;
       for (auto &y : x.terms_) {
-        printf("%d ", y);
+        if (!first)
+          printf("-");
+        printf("%d", y);
+        first = false;
       }
       printf("\n");
     }
   }
-
   PrintImplicantChart();
 }
 
@@ -54,12 +56,10 @@ void qm_petrick::PrintTable() const {
   }
 }
 
-qm_petrick::~qm_petrick() {
+qm_petrick::~qm_petrick() = default;
 
-}
-qm_petrick::qm_petrick(const qm_petrick &other) {
+qm_petrick::qm_petrick(const qm_petrick &other) = default;
 
-}
 qm_petrick &qm_petrick::operator=(const qm_petrick &other) {
 //  return <#initializer#>;
 }
@@ -261,10 +261,11 @@ int qm_petrick::CountBits(std::string &term) {
 
 void qm_petrick::PrintImplicantChart() {
 
-//  printf("%11s", "");
+  CheckEssentials(prime_implicants_);
   for (auto &x : minterms_) {
     printf("%5d", x);
   }
+
   printf("\n");
   for (auto &x : prime_implicants_) {
     for (auto &y : minterms_) {
@@ -272,11 +273,102 @@ void qm_petrick::PrintImplicantChart() {
     }
 
     printf("   | ");
-    for (auto &z : x.terms_)
-      printf("%d ", z);
+    bool first = true;
+    for (auto &z : x.terms_) {
+      if (!first)
+        printf("-");
+      printf("%d", z);
+      first = false;
+    }
 
-    printf(" \n");
-//    printf("| %s\n", x.bits_.c_str());
+    printf("%s \n", (x.essential_) ? " * ESSENTIAL" : "");
   }
+
+  std::set<int> used_minterms;
+  std::string expression = "";
+  for (auto i = prime_implicants_.begin(); i != prime_implicants_.end();) {
+    if (i->essential_) {
+      for (auto& term : i->terms_)
+        used_minterms.insert(term);
+      expression += i->bits_ + " + ";
+      prime_implicants_.erase(i);
+    } else {
+      ++i;
+    }
+  }
+
+  for (auto &implicant : prime_implicants_) {
+    bool used = false;
+    for (auto &term : implicant.terms_) {
+      if (!used_minterms.count(term)) {
+        used_minterms.insert(term);
+        used = true;
+      }
+
+      if (used)
+        expression += implicant.bits_+" + ";
+    }
+  }
+
+  printf("%s\n", ConvertExpression(expression).c_str());
+
+}
+
+bool qm_petrick::CheckEssentials(std::vector<minterm> &implicants) {
+  std::set<int> essentials;
+  std::vector<int> non_essentials;
+
+  for (auto &minterms : implicants) {
+    minterms.essential_ = false;
+    for (auto &term : minterms.terms_) {
+      if (essentials.count(term)) {
+        non_essentials.push_back(term);
+      } else
+        essentials.insert(term);
+    }
+  }
+
+  for (auto& term : non_essentials) { // Remove dupes, and you are left with the essentials
+    essentials.erase(term);
+  }
+
+  for (auto &minterm : prime_implicants_) {
+    for (auto &term : essentials) {
+      if (minterm.terms_.count(term)) // If this includes the essential, then mark flag as true.
+        minterm.essential_ = true;
+    }
+  }
+
+}
+
+std::string qm_petrick::ConvertExpression(std::string &expression) {
+
+  std::stringstream ss(expression);
+  std::string output, temp;
+
+  while (ss>>temp) {
+
+    if (temp.length() > 1) {
+
+      temp = temp.substr(10-var_);
+      for (unsigned int i = 0; i < temp.length(); ++i) {
+        if (temp[i] == '1')
+          output += (i+65);
+        else if (temp[i] == '0') {
+          output += i+65;
+          output += '\'';
+        }
+      }
+
+    } else {
+      output += " " + temp + " ";
+    }
+  }
+
+  output.pop_back(); // todo: this assumes that the expression is not empty, fix
+  output.pop_back();
+
+  return output;
+
 }
 
